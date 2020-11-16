@@ -175,19 +175,24 @@ class InductionMotor():
     # Função privada para plotar
     def __plot(self, x, y, title, xlabel, ylabel, color, save=None):
 
-        plt.plot(x, y, c=color)
-        plt.xlim(left=0, right=self.WSinc() + 1)
-        plt.ylim(bottom=0)
-        plt.title(title, fontsize=20)
-        plt.xlabel(xlabel, fontsize=14)
-        plt.ylabel(ylabel, fontsize=14)
+        plt.style.use("seaborn")
+
+        fig, ax = plt.subplots()
+
+        ax.plot(x, y, c=color)
+        ax.set_xlim(left=0, right=self.WSinc() + 1)
+        ax.set_ylim(bottom=0)
+        ax.set_title(title, fontsize=20)
+        ax.set_xlabel(xlabel, fontsize=14)
+        ax.set_ylabel(ylabel, fontsize=14)
 
         if(save != None):
             plt.savefig(save)
 
-        plt.show()
+        return ax
 
     # Função privada para calcular as velocidades mecânica para plotar
+
     def __getVelocidadesMecanica(self, rad=False):
         velocidades = []
         for s in np.arange(0.0001, 1, 0.001):
@@ -213,6 +218,8 @@ class InductionMotor():
         self.__plot(self.__getVelocidadesMecanica(), self.__getTorques(), "Conjugado Induzido",
                     r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue", save)
 
+        plt.show()
+
     # Plota o gráfico da Potencia de saída pela velocidade mecânica
 
     def plotPotenciaSaida(self, save=None):
@@ -220,4 +227,16 @@ class InductionMotor():
         self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
                     r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise", save)
 
-    # def plot(self):
+        plt.show()
+
+    # Função para plotar os 2 gráficos
+    def plot(self):
+
+        self.__plot(self.__getVelocidadesMecanica(), self.__getTorques(), "Conjugado Induzido",
+                    r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue")
+
+        self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
+                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise")
+
+        plt.tight_layout()
+        plt.show()
