@@ -172,44 +172,52 @@ class InductionMotor():
     def torqueMaximo(self):
         return self.__torque(self.getSMaxTorque())
 
-    # Plota o gráfico de torque pela velocidade mecânica
-    def plotTorque(self, save=False):
-        torqueVector = []
-        velocity = []
-        for s in np.arange(0.0001, 1, 0.001):
-            torqueVector.append(self.__torque(s))
-            velocity.append((1-s) * self.WSinc())
+    # Função privada para plotar
+    def __plot(self, x, y, title, xlabel, ylabel, color, save=None):
 
-        plt.plot(velocity, torqueVector, c="dodgerblue")
+        plt.plot(x, y, c=color)
         plt.xlim(left=0, right=self.WSinc() + 1)
         plt.ylim(bottom=0)
-        plt.title("Conjugado Induzido", fontsize=20)
-        plt.xlabel(r"$\omega_{mec}$ (rpm)", fontsize=14)
-        plt.ylabel(r"$\tau_{ind}$ (N.m)", fontsize=14)
+        plt.title(title, fontsize=20)
+        plt.xlabel(xlabel, fontsize=14)
+        plt.ylabel(ylabel, fontsize=14)
 
-        if(save):
-            plt.savefig("TorquevsVelocidade.png")
+        if(save != None):
+            plt.savefig(save)
 
         plt.show()
+
+    # Função privada para calcular as velocidades mecânica para plotar
+    def __getVelocidadesMecanica(self, rad=False):
+        velocidades = []
+        for s in np.arange(0.0001, 1, 0.001):
+            velocidades.append((1-s) * self.WSinc(rad))
+
+        return np.array(velocidades)
+
+    # Função privada para calcular os torques para plotar
+    def __getTorques(self):
+        torques = []
+        for s in np.arange(0.0001, 1, 0.001):
+            torques.append(self.__torque(s))
+
+        return np.array(torques)
+
+    # Função privada para calcular as potências de saída para plotar
+    def __getPotenciasSaida(self):
+        return self.__getVelocidadesMecanica(True) * self.__getTorques()
+
+    # Plota o gráfico de torque pela velocidade mecânica
+    def plotTorque(self, save=None):
+
+        self.__plot(self.__getVelocidadesMecanica(), self.__getTorques(), "Conjugado Induzido",
+                    r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue", save)
 
     # Plota o gráfico da Potencia de saída pela velocidade mecânica
-    def plotPotenciaSaida(self, save=False):
-        potenciaSaidaVector = []
-        velocity = []
-        for s in np.arange(0.0001, 1, 0.001):
-            velocidadeMecanicaRad = (1-s) * self.WSinc(rad=True)
-            potenciaSaidaVector.append(
-                (self.__torque(s) * velocidadeMecanicaRad)/1000)
-            velocity.append((1-s) * self.WSinc())
 
-        plt.plot(velocity, potenciaSaidaVector, c="mediumturquoise")
-        plt.xlim(left=0, right=self.WSinc())
-        plt.ylim(bottom=0)
-        plt.title("Potência de Saída", fontsize=20)
-        plt.xlabel(r"$\omega_{mec}$ (rad/s)", fontsize=14)
-        plt.ylabel(r"$P_{saída}$ (kW)", fontsize=14)
+    def plotPotenciaSaida(self, save=None):
 
-        if(save):
-            plt.savefig("PotenciavsVelocidade.png")
+        self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
+                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise", save)
 
-        plt.show()
+    # def plot(self):
