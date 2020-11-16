@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 class InductionMotor():
     """Induction Motor Class"""
 
-    def __init__(self, v, s, r1, x1, r2, x2, xm, rc=0, polos=4, frequency=60):
+    def __init__(self, v, s, r1, x1, r2, x2, xm, rc=0, polos=4, frequency=60, perdasNucleo=0, perdasAtritVent=0, perdasSuplementares=0):
         """v: Tensão de linha
            s: Escorregamento
            r1: Resistência do Estator
@@ -15,7 +15,11 @@ class InductionMotor():
            xm: Indutância de magnetização
            rc: Resistência do nucleo
            polos: numero de polos do motor - default 4
-           frequency: Frequência da rede - default 4"""
+           frequency: Frequência da rede - default 4
+           perdasNucleo: Perdas no núcleo - default 0
+           perdasAtritVent: Perdas por atrito e ventilação - default 0
+           perdasSuplementares: Perdas Suplementares - default 0
+           """
 
         self.setEscorregamento(s)
         self.setVoltage(v)
@@ -26,6 +30,9 @@ class InductionMotor():
         self.__z2 = (r2/self.__getEscorregamento()) + 1j * x2
         self.__xm = 1j * xm
         self.__rc = rc
+        self.__perdasNucleo = perdasNucleo
+        self.__perdasAtritVent = perdasAtritVent
+        self.__perdasSuplementares = perdasSuplementares
 
     # getters and setters properties
     def setVoltage(self, v):
@@ -56,9 +63,14 @@ class InductionMotor():
     def __getParallel(self, z1, z2):
         return (z1 * z2)/(z1 + z2)
 
+    # Calcula a Frenquência do Rotor
+    def getRotorFrequency(self):
+        return self.__getEscorregamento() * self.__getFrequency()
+
     # Velocidade sincrona
     def WSinc(self, rad=False):
-        return (4 * np.pi * self.__getFrequency())/self.__getNumPolos() if rad else (120 * self.__getFrequency())/self.__getNumPolos()
+        return (4 * np.pi * self.__getFrequency())/self.__getNumPolos() \
+            if rad else (120 * self.__getFrequency())/self.__getNumPolos()
 
     # Velocidade mecânica
     def WMec(self, rad=False):
@@ -93,17 +105,45 @@ class InductionMotor():
         return self.__getVoltage() * (self.__xm/(self.__xm + self.__z1))
 
     # Corrente de Linha
-    def getCurrent(self):
+    def correnteEntrada(self):
         return self.__getVoltage()/self.getZeq()
 
     # Fator de potência
     def getPowerFactor(self):
-        return np.cos(np.angle(self.getCurrent()))
+        return np.cos(np.angle(self.correnteEntrada()))
 
     # Potência de Entrada
-    def getPowerIn(self):
+    def potenciaEntrada(self):
 
-        return 3 * self.__getVoltage() * np.abs(np.abs(self.getCurrent())) * self.getPowerFactor()
+        return 3 * self.__getVoltage() * np.abs(np.abs(self.correnteEntrada())) * self.getPowerFactor()
+
+    # Calcula as perdas no cobre
+    def perdasCobreEstator(self):
+        return 3 * np.abs(self.correnteEntrada())**2 * np.real(self.__z1)
+
+    # Calcula a Potência do Entreferro
+    def potenciaEntreFerro(self):
+        return self.potenciaEntrada() - self.perdasCobreEstator() - self.__perdasNucleo
+
+    # Calcula a Potência convertida
+    def potenciaConvertida(self):
+        return (1 - self.__getEscorregamento()) * self.potenciaEntreFerro()
+
+    def potenciaSaida(self):
+        return self.potenciaConvertida() - self.__perdasAtritVent - self.__perdasSuplementares
+
+    # Caucula a Eficiencia do Motor
+    def eficienciaMotor(self):
+        return (self.potenciaSaida()/self.potenciaEntrada()) * 100
+
+    # Conjugado Induzido
+
+    # def conjugadoInduzido(self):
+    #     return self.potenciaConvertida()/self.WMec(rad=True)
+
+    # Conjugado de Carga
+    def conjugadoCarga(self):
+        return self.potenciaSaida()/self.WMec(rad=True)
 
     # Função privada para calcular o Torque
     def __torque(self, s):
@@ -117,7 +157,7 @@ class InductionMotor():
         return (3 * Vth ** 2 * newR2) / (self.WSinc(rad=True) * Z)
 
     # Calcula o torque induzido
-    def getTorqueInduzido(self):
+    def torqueInduzido(self):
         return self.__torque(self.__getEscorregamento())
 
     # Calcula o valor de S para o Torque Máximo
@@ -129,11 +169,11 @@ class InductionMotor():
         return (self.__r2)/np.sqrt((Rth)**2 + (Xth + X2)**2)
 
     # Calcula o torque Máximo
-    def getMaxTorque(self):
+    def torqueMaximo(self):
         return self.__torque(self.getSMaxTorque())
 
     # Plota o gráfico de torque pela velocidade mecânica
-    def plotTorque(self):
+    def plotTorque(self, save=False):
         torqueVector = []
         velocity = []
         for s in np.arange(0.0001, 1, 0.001):
@@ -146,4 +186,30 @@ class InductionMotor():
         plt.title("Conjugado Induzido", fontsize=20)
         plt.xlabel(r"$\omega_{mec}$ (rpm)", fontsize=14)
         plt.ylabel(r"$\tau_{ind}$ (N.m)", fontsize=14)
+
+        if(save):
+            plt.savefig("TorquevsVelocidade.png")
+
+        plt.show()
+
+    # Plota o gráfico da Potencia de saída pela velocidade mecânica
+    def plotPotenciaSaida(self, save=False):
+        potenciaSaidaVector = []
+        velocity = []
+        for s in np.arange(0.0001, 1, 0.001):
+            velocidadeMecanicaRad = (1-s) * self.WSinc(rad=True)
+            potenciaSaidaVector.append(
+                (self.__torque(s) * velocidadeMecanicaRad)/1000)
+            velocity.append((1-s) * self.WSinc())
+
+        plt.plot(velocity, potenciaSaidaVector, c="mediumturquoise")
+        plt.xlim(left=0, right=self.WSinc())
+        plt.ylim(bottom=0)
+        plt.title("Potência de Saída", fontsize=20)
+        plt.xlabel(r"$\omega_{mec}$ (rad/s)", fontsize=14)
+        plt.ylabel(r"$P_{saída}$ (kW)", fontsize=14)
+
+        if(save):
+            plt.savefig("PotenciavsVelocidade.png")
+
         plt.show()
