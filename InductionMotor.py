@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+from cmath import polar
 
 
 class InductionMotor():
@@ -105,6 +107,7 @@ class InductionMotor():
         return self.__getVoltage() * (self.__xm/(self.__xm + self.__z1))
 
     # Corrente de Linha
+
     def correnteEntrada(self):
         return self.__getVoltage()/self.getZeq()
 
@@ -240,3 +243,28 @@ class InductionMotor():
 
         plt.tight_layout()
         plt.show()
+
+    def table(self):
+
+        corrente = np.abs(self.correnteEntrada())
+        pin = self.potenciaEntrada()/1000
+        pce = self.perdasCobreEstator()/1000
+        pef = self.potenciaEntreFerro()/1000
+        pconv = self.potenciaConvertida()/1000
+        pout = self.potenciaSaida()/1000
+        conjugadoCarga = self.conjugadoCarga()
+        eficiencia = self.eficienciaMotor()
+
+        motor = {"Caracteristicas do Motor": {"Ws [rpm]": self.WSinc(),
+                                              "Wm [rpm]": self.WMec(),
+                                              "Corrente [A]": corrente,
+                                              "FP": self.getPowerFactor(),
+                                              "Pin [kW]": pin,
+                                              "Pce [kW]": pce,
+                                              "Pef [kW]": pef,
+                                              "Pconv [kW]": pconv,
+                                              "Pout [kW]": pout,
+                                              "Conjugado de Carga [N.m]": conjugadoCarga,
+                                              "Eficiência [%]": eficiencia}}
+
+        return pd.DataFrame(motor).round(3)
