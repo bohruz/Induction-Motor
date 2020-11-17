@@ -66,7 +66,7 @@ class InductionMotor():
         return (z1 * z2)/(z1 + z2)
 
     # Calcula a Frenquência do Rotor
-    def getRotorFrequency(self):
+    def RotorFrequency(self):
         return self.__getEscorregamento() * self.__getFrequency()
 
     # Velocidade sincrona
@@ -80,10 +80,10 @@ class InductionMotor():
 
     # Velocidade mecânica para o torque máximo
     def WMecMaxTorque(self, rad=False):
-        return (1 - self.getSMaxTorque()) * self.WSinc(rad)
+        return (1 - self.SMaxTorque()) * self.WSinc(rad)
 
     # Impedância Equivalente
-    def getZeq(self):
+    def Zeq(self):
 
         if(self.__rc == 0):
             return self.__getParallel(self.__xm, self.__z2) + self.__z1
@@ -92,7 +92,7 @@ class InductionMotor():
             return self.__getParallel(xmrc, self.__z2) + self.__z1
 
     # Impedância Equivalente de Thevenin
-    def getZThevenin(self):
+    def Zthevenin(self):
 
         if(self.__rc == 0):
             return self.__getParallel(self.__z1, self.__xm)
@@ -103,22 +103,22 @@ class InductionMotor():
             return self.__getParallel(self.__z1, xmrc)
 
     # Tensão de Thevenin
-    def getVThevenin(self):
+    def VThevenin(self):
         return self.__getVoltage() * (self.__xm/(self.__xm + self.__z1))
 
     # Corrente de Linha
 
     def correnteEntrada(self):
-        return self.__getVoltage()/self.getZeq()
+        return self.__getVoltage()/self.Zeq()
 
     # Fator de potência
-    def getPowerFactor(self):
+    def PowerFator(self):
         return np.cos(np.angle(self.correnteEntrada()))
 
     # Potência de Entrada
     def potenciaEntrada(self):
 
-        return 3 * self.__getVoltage() * np.abs(np.abs(self.correnteEntrada())) * self.getPowerFactor()
+        return 3 * self.__getVoltage() * np.abs(np.abs(self.correnteEntrada())) * self.PowerFator()
 
     # Calcula as perdas no cobre
     def perdasCobreEstator(self):
@@ -146,12 +146,13 @@ class InductionMotor():
 
     # Conjugado de Carga
     def conjugadoCarga(self):
-        return self.potenciaSaida()/self.WMec(rad=True)
 
+        return self.potenciaSaida()/self.WMec(rad=True)
     # Função privada para calcular o Torque
+
     def __torque(self, s):
-        Vth = np.abs(self.getVThevenin())
-        Zth = self.getZThevenin()
+        Vth = np.abs(self.VThevenin())
+        Zth = self.Zthevenin()
 
         newR2 = self.__r2/s
         newZ2 = newR2 + np.imag(self.__z2)
@@ -164,8 +165,8 @@ class InductionMotor():
         return self.__torque(self.__getEscorregamento())
 
     # Calcula o valor de S para o Torque Máximo
-    def getSMaxTorque(self):
-        Zth = self.getZThevenin()
+    def SMaxTorque(self):
+        Zth = self.Zthevenin()
         Rth = np.real(Zth)
         Xth = np.imag(Zth)
         X2 = np.imag(self.__z2)
@@ -173,7 +174,7 @@ class InductionMotor():
 
     # Calcula o torque Máximo
     def torqueMaximo(self):
-        return self.__torque(self.getSMaxTorque())
+        return self.__torque(self.SMaxTorque())
 
     # Função privada para plotar
     def __plot(self, x, y, title, xlabel, ylabel, color, save=None):
@@ -215,7 +216,10 @@ class InductionMotor():
     def __getPotenciasSaida(self):
         return self.__getVelocidadesMecanica(True) * self.__getTorques()
 
+    def __getEficiencias(self):
+        return self.__getPotenciasSaida()/self.potenciaEntrada()
     # Plota o gráfico de torque pela velocidade mecânica
+
     def plotTorque(self, save=None):
 
         self.__plot(self.__getVelocidadesMecanica(), self.__getTorques(), "Conjugado Induzido",
@@ -258,7 +262,7 @@ class InductionMotor():
         motor = {"Caracteristicas do Motor": {"Ws [rpm]": self.WSinc(),
                                               "Wm [rpm]": self.WMec(),
                                               "Corrente [A]": corrente,
-                                              "FP": self.getPowerFactor(),
+                                              "FP": self.PowerFator(),
                                               "Pin [kW]": pin,
                                               "Pce [kW]": pce,
                                               "Pef [kW]": pef,
