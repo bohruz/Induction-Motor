@@ -290,12 +290,18 @@ class InductionMotor():
 
     # Plota o gráfico de torque pela velocidade mecânica
 
-    def plotEficiencia(self, nameToSave=None):
-        self.__plot(*self.__getPotenciasSaidaEficiencias(self.velocidadeVazio(),
-                                                         self.velocidadePlenaCarga()), "Eficiencia",
-                    r"$P_{saída}$ (kW)", r"$\eta$ (%)", "deepskyblue", nameToSave)
+    def plotEficiencia(self, potenciaInicial=0, nameToSave=None):
+        velocidade = self.__findVelocidade(potenciaInicial)
 
-        plt.show()
+        if(potenciaInicial < self.__potenciaPlenaCarga):
+            self.__plot(*self.__getPotenciasSaidaEficiencias(velocidade,
+                                                             self.velocidadePlenaCarga()), "Eficiencia",
+                        r"$P_{saída}$ (kW)", r"$\eta$ (%)", "deepskyblue", nameToSave)
+
+            plt.show()
+
+        else:
+            print("Não foi possível plotar o gráfico de eficiência!\nPotência inicial maior que a potência nominal")
 
     def plotTorque(self, nameToSave=None):
 
@@ -309,7 +315,7 @@ class InductionMotor():
     def plotPotenciaSaida(self, nameToSave=None):
 
         self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
-                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise", nameToSave)
+                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumslateblue", nameToSave)
 
         plt.show()
 
@@ -320,8 +326,11 @@ class InductionMotor():
                     r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue")
 
         self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
-                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise")
+                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumslateblue")
 
+        self.__plot(*self.__getPotenciasSaidaEficiencias(self.__findVelocidade(0),
+                                                         self.velocidadePlenaCarga()), "Eficiencia",
+                    r"$P_{saída}$ (kW)", r"$\eta$ (%)", "deepskyblue")
         plt.tight_layout()
         plt.show()
 
