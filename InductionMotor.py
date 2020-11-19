@@ -149,21 +149,21 @@ class InductionMotor():
 
     # Função para plotar gráficos
 
-    def __plot(self, x, y, title, xlabel, ylabel, color, save=None):
+    def __plot(self, x, y, title, xlabel, ylabel, color, nameToSave=None):
 
         plt.style.use("seaborn")
 
         fig, ax = plt.subplots()
 
         ax.plot(x, y, c=color)
-        ax.set_xlim(left=0)  # , right=self.WSinc() + 1)
-        ax.set_ylim(bottom=0)
+        ax.set_xlim(left=0, right=np.max(x))
+        ax.set_ylim(bottom=np.min(y))
         ax.set_title(title, fontsize=20)
         ax.set_xlabel(xlabel, fontsize=14)
         ax.set_ylabel(ylabel, fontsize=14)
 
-        if(save != None):
-            plt.savefig(save)
+        if(nameToSave != None):
+            plt.savefig(f"{nameToSave}.png")
 
         return ax
     ##############################################################
@@ -290,26 +290,26 @@ class InductionMotor():
 
     # Plota o gráfico de torque pela velocidade mecânica
 
-    def plotEficiencia(self, save=None):
+    def plotEficiencia(self, nameToSave=None):
         self.__plot(*self.__getPotenciasSaidaEficiencias(self.velocidadeVazio(),
                                                          self.velocidadePlenaCarga()), "Eficiencia",
-                    r"$P_{saída}$ (kW)", r"$\eta$ (%)", "deepskyblue", save)
+                    r"$P_{saída}$ (kW)", r"$\eta$ (%)", "deepskyblue", nameToSave)
 
         plt.show()
 
-    def plotTorque(self, save=None):
+    def plotTorque(self, nameToSave=None):
 
         self.__plot(self.__getVelocidadesMecanica(), self.__getTorques(), "Conjugado Induzido",
-                    r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue", save)
+                    r"$\omega_{mec}$ (rpm)", r"$\tau_{ind}$ (N.m)", "dodgerblue", nameToSave)
 
         plt.show()
 
     # Plota o gráfico da Potencia de saída pela velocidade mecânica
 
-    def plotPotenciaSaida(self, save=None):
+    def plotPotenciaSaida(self, nameToSave=None):
 
         self.__plot(self.__getVelocidadesMecanica(), self.__getPotenciasSaida(), "Potência de Saída",
-                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise", save)
+                    r"$\omega_{mec}$ (rpm)", r"$P_{saída}$ (kW)", "mediumturquoise", nameToSave)
 
         plt.show()
 
